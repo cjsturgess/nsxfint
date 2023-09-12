@@ -10,6 +10,9 @@ import argparse
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import warnings
+
+warnings.simplefilter("ignore")
 
 
 # Arguments
@@ -84,6 +87,13 @@ def main():
     elif args.input.suffix not in [".csv", ".tsv"]:
         log(f"Input file {args.input} is not CSV or TSV.", fatal=True)
 
+    # Remove all double-quotes from input file.
+    log(f"Cleaning input file {args.input}...", verbose=True)
+    with open(args.input, "r") as f:
+        content = f.read()
+    with open(args.input, "w") as f:
+        f.write(content.replace('"', ""))
+
     # Parse and clean input file.
     log(f"Reading input file {args.input}...", verbose=True)
     vmh_df = pd.read_csv(args.input, sep="\t", skiprows=skip_rows(args.input))
@@ -114,9 +124,11 @@ def main():
         nsxfint_df[nsxf_df["NSX Feature Name"]] > 0, True, ""
     )
     nsxfint_df["NSX Edition"] = nsxfint_df["NSX Edition"].apply(lambda x: editions[x])
+    log("NSX Editions calculated.", verbose=True)
 
     # Save to CSV
     nsxfint_df.to_csv(args.output, index=False)
+    log(f"Output written to {args.output}.")
 
 
 if __name__ == "__main__":
